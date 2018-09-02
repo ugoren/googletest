@@ -1,7 +1,7 @@
 #ifndef GOOGLETEST_GOOGLEMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_FUNCTION_MOCKER_H_
 #define GOOGLETEST_GOOGLEMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_FUNCTION_MOCKER_H_
 
-#include "third_party/googletest/googlemock/include/gmock/gmock-generated-function-mockers.h"
+#include "googletest/googlemock/include/gmock/gmock-generated-function-mockers.h"
 
 #define MOCK_METHOD(_Ret, _MethodName, _Args, _Spec)                       \
   GMOCK_INTERNAL_MOCK_METHOD_IMPL(GMOCK_INTERNAL_NARG0 _Args, _MethodName, \
