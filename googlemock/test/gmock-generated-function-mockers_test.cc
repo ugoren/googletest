@@ -109,6 +109,10 @@ class FooInterface {
    float g, double h, unsigned i, char* j, const std::string& k) = 0;
   STDMETHOD_(char, CTConst)(int x) const = 0;
 #endif  // GTEST_OS_WINDOWS
+
+  virtual int NoExcept() noexcept = 0;
+  virtual int Override(int) = 0;
+  virtual int OverrideNoExcept(int a, bool b) noexcept = 0;
 };
 
 // Const qualifiers on arguments were once (incorrectly) considered
@@ -172,6 +176,10 @@ class MockFoo : public FooInterface {
                              ());
 #endif  // GTEST_OS_WINDOWS
 
+  MOCK_METHOD_ATTRS(int, NoExcept, (), noexcept);
+  MOCK_METHOD_ATTRS(int, Override, (int), override);
+  MOCK_METHOD_ATTRS(int, OverrideNoExcept, (int, bool), noexcept override);
+
  private:
   GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFoo);
 };
@@ -230,6 +238,11 @@ class MockFooBC : public FooInterface {
   MOCK_METHOD0_WITH_CALLTYPE(STDMETHODCALLTYPE, CTReturnTypeWithComma,
                              std::map<int, std::string>());
 #endif  // GTEST_OS_WINDOWS
+
+  // BC macros don't support override and noexcept. But we must implement the methods.
+  int NoExcept() noexcept { return 0; }
+  int Override(int) noexcept { return 0; }
+  int OverrideNoExcept(int, bool) noexcept { return 0; }
 
  private:
   GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFooBC);
@@ -408,6 +421,17 @@ TEST_F(FunctionMockerTest, MocksReturnTypeWithCommaAndCallType) {
 }
 
 #endif  // GTEST_OS_WINDOWS
+
+TEST_F(FunctionMockerTest, MockWithAttrs)
+{
+  EXPECT_CALL(mock_foo_, NoExcept());
+  EXPECT_CALL(mock_foo_, Override(_));
+  EXPECT_CALL(mock_foo_, OverrideNoExcept(_, _));
+
+  EXPECT_EQ(0, mock_foo_.NoExcept());
+  EXPECT_EQ(0, mock_foo_.Override(1));
+  EXPECT_EQ(0, mock_foo_.OverrideNoExcept(2, false));
+}
 
 // Repeat some MockFoo tests with MockFooBC
 class FunctionMockerBCTest : public testing::Test {
