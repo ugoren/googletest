@@ -430,6 +430,7 @@ TEST_F(FunctionMockerTest, MocksReturnTypeWithCommaAndCallType) {
 
 TEST_F(FunctionMockerTest, MockWithAttrs)
 {
+#if GTEST_LANG_CXX11
   EXPECT_CALL(mock_foo_, NoExcept());
   EXPECT_CALL(mock_foo_, Override(_));
   EXPECT_CALL(mock_foo_, OverrideNoExcept(_, _));
@@ -437,6 +438,7 @@ TEST_F(FunctionMockerTest, MockWithAttrs)
   EXPECT_EQ(0, mock_foo_.NoExcept());
   EXPECT_EQ(0, mock_foo_.Override(1));
   EXPECT_EQ(0, mock_foo_.OverrideNoExcept(2, false));
+#endif // GTEST_LANG_CXX11
 }
 
 // Repeat some MockFoo tests with MockFooBC
