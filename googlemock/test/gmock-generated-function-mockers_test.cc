@@ -110,7 +110,7 @@ class FooInterface {
   STDMETHOD_(char, CTConst)(int x) const = 0;
 #endif  // GTEST_OS_WINDOWS
 
-#if defined(GTEST_LANG_CXX11)
+#if GTEST_LANG_CXX11
   virtual int NoExcept() noexcept = 0;
   virtual int Override(int) = 0;
   virtual int OverrideNoExcept(int a, bool b) noexcept = 0;
@@ -178,7 +178,7 @@ class MockFoo : public FooInterface {
                              ());
 #endif  // GTEST_OS_WINDOWS
 
-#if defined(GTEST_LANG_CXX11)
+#if GTEST_LANG_CXX11
   MOCK_METHOD_ATTRS(int, NoExcept, (), noexcept);
   MOCK_METHOD_ATTRS(int, Override, (int), override);
   MOCK_METHOD_ATTRS(int, OverrideNoExcept, (int, bool), noexcept override);
@@ -243,7 +243,7 @@ class MockFooBC : public FooInterface {
                              std::map<int, std::string>());
 #endif  // GTEST_OS_WINDOWS
 
-#if defined(GTEST_LANG_CXX11)
+#if GTEST_LANG_CXX11
   // BC macros don't support override and noexcept. But we must implement the methods.
   int NoExcept() noexcept { return 0; }
   int Override(int) noexcept { return 0; }
