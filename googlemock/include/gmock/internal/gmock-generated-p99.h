@@ -40,6 +40,25 @@
 #ifndef GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_
 #define GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_
 
+/**
+ ** @brief Expand a macro with some arguments
+ **
+ ** The purpose of this macro is to overcome MSVC's incompatible preprocessor.
+ ** When passing __VA_ARGS__ to a macro that receives something other than ...
+ ** the MSVC preprocessor passes everything as the first parameter:
+ ** @code
+ ** #define A(a, b) A=a B=b
+ ** #define B(...) A(__VA_ARGS__)
+ ** @endcode
+ ** "B(1, 2)" expands to "A=1, 2 B="
+ **
+ ** Note: With a compliant preprocesor, it works just like calling the macro,
+ ** except if the expansion ends up calling this again. Then it's not
+     re-expanded.
+ **/
+#define __GMOCK_P00_EXPAND(macro, args) macro args
+
+
 //
 // Taken from p99_paste.h
 //
@@ -100,8 +119,13 @@
 //
 #define __GMOCK_P00_ARG(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, ...) _11
 
+#if defined(_MSC_VER)
+#define __GMOCK_P00_NARG_1(...) __GMOCK_P00_EXPAND(__GMOCK_P00_ARG, \
+    (__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, ))
+#else // _MSC_VER
 #define __GMOCK_P00_NARG_1(...) __GMOCK_P00_ARG(__VA_ARGS__, 10, 9, 8, 7, 6, \
     5, 4, 3, 2, 1, 0, )
+#endif // _MSC_VER
 
 #define __GMOCK_P00_NARG_2(...) __GMOCK_P00_ARG(__VA_ARGS__,  5, \
     __GMOCK_P00_INV(2), 4, __GMOCK_P00_INV(2), 3, __GMOCK_P00_INV(2), 2, \
@@ -109,8 +133,33 @@
 
 /** @brief Determine of the argument list has a comma,
     i.e at least two arguments. */
+#if defined(_MSC_VER)
+#define __GMOCK_P99_HAS_COMMA(...) __GMOCK_P00_EXPAND(__GMOCK_P00_ARG, \
+    (__VA_ARGS__, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0))
+#else // _MSC_VER
 #define __GMOCK_P99_HAS_COMMA(...) __GMOCK_P00_ARG(__VA_ARGS__, 1, 1, 1, 1, \
     1, 1, 1, 1, 1, 0, 0)
+#endif // _MSC_VER
+#if defined(_MSC_VER)
+#define __GMOCK_P00_PRE2(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE1, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE3(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE2, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE4(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE3, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE5(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE4, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE6(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE5, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE7(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE6, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE8(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE7, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE9(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE8, \
+    (__VA_ARGS__))
+#define __GMOCK_P00_PRE10(_0, ...) _0, __GMOCK_P00_EXPAND(__GMOCK_P00_PRE9, \
+    (__VA_ARGS__))
+#else // _MSV_VER
 #define __GMOCK_P00_PRE2(_0, ...) _0, __GMOCK_P00_PRE1(__VA_ARGS__)
 #define __GMOCK_P00_PRE3(_0, ...) _0, __GMOCK_P00_PRE2(__VA_ARGS__)
 #define __GMOCK_P00_PRE4(_0, ...) _0, __GMOCK_P00_PRE3(__VA_ARGS__)
@@ -120,6 +169,7 @@
 #define __GMOCK_P00_PRE8(_0, ...) _0, __GMOCK_P00_PRE7(__VA_ARGS__)
 #define __GMOCK_P00_PRE9(_0, ...) _0, __GMOCK_P00_PRE8(__VA_ARGS__)
 #define __GMOCK_P00_PRE10(_0, ...) _0, __GMOCK_P00_PRE9(__VA_ARGS__)
+#endif // _MSV_VER
 
 //
 // Taken from p99_args.h
@@ -239,8 +289,14 @@ __GMOCK_P00_ISEMPTY( \
 /**
  ** Cut the argument list at position @a N
  **/
+#ifdef _MSC_VER
+#define __GMOCK_P99_SELS(N, \
+    ...) __GMOCK_P00_EXPAND(__GMOCK_P99_PASTE2(__GMOCK_P00_PRE, N), \
+    (__VA_ARGS__))
+#else // _MSC_VER
 #define __GMOCK_P99_SELS(N, ...) __GMOCK_P99_PASTE2(__GMOCK_P00_PRE, \
     N)(__VA_ARGS__)
+#endif // _MSC_VER
 
 
 #endif // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_

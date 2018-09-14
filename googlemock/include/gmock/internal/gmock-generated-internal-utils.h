@@ -325,48 +325,8 @@ struct Function<R(*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : Function<R(A1,
 // Argument counting preprocessing macros
 //
 
-#if !defined(_MSC_VER)
-#define GMOCK_USE_P99
-#endif
-
-#if defined(GMOCK_USE_P99)
-
 #include "gmock-generated-p99.h"
 #define __GMOCK_NARGS __GMOCK_P99_NARG
 #define __GMOCK_FIRST __GMOCK_P99_SELS
-
-#else // GMOCK_USE_P99
-
-#define __GMOCK_CONCAT(a, b) a##b
-#define __GMOCK_EXPAND(x) x
-#define __GMOCK_AUGMENTER(...) unused, __VA_ARGS__
-#define __GMOCK_NARGS_0(...) __GMOCK_NARGS_1(__GMOCK_AUGMENTER(__VA_ARGS__))
-#define __GMOCK_NARGS_1(...) __GMOCK_EXPAND(__GMOCK_NARGS_2(__VA_ARGS__, 10, \
-    9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
-#define __GMOCK_NARGS_2(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, VAL, \
-    ...) VAL
-#define __GMOCK_NARGS(...) __GMOCK_NARGS_0(__VA_ARGS__)
-
-// Get the first N arguments
-#define __GMOCK_FIRST(n, ...) __GMOCK_EXPAND(__GMOCK_CONCAT(__GMOCK_FIRST_, \
-    n)(__VA_ARGS__))
-
-#define __GMOCK_FIRST_0(...)
-#define __GMOCK_FIRST_1(_1, ...) _1
-#define __GMOCK_FIRST_2(_1, _2, ...) _1, _2
-#define __GMOCK_FIRST_3(_1, _2, _3, ...) _1, _2, _3
-#define __GMOCK_FIRST_4(_1, _2, _3, _4, ...) _1, _2, _3, _4
-#define __GMOCK_FIRST_5(_1, _2, _3, _4, _5, ...) _1, _2, _3, _4, _5
-#define __GMOCK_FIRST_6(_1, _2, _3, _4, _5, _6, ...) _1, _2, _3, _4, _5, _6
-#define __GMOCK_FIRST_7(_1, _2, _3, _4, _5, _6, _7, ...) _1, _2, _3, _4, _5, \
-    _6, _7
-#define __GMOCK_FIRST_8(_1, _2, _3, _4, _5, _6, _7, _8, ...) _1, _2, _3, _4, \
-    _5, _6, _7, _8
-#define __GMOCK_FIRST_9(_1, _2, _3, _4, _5, _6, _7, _8, _9, ...) _1, _2, _3, \
-    _4, _5, _6, _7, _8, _9
-#define __GMOCK_FIRST_10(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, ...) _1, \
-    _2, _3, _4, _5, _6, _7, _8, _9, _10
-
-#endif // GMOCK_USE_P99
 
 #endif  // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_INTERNAL_UTILS_H_
