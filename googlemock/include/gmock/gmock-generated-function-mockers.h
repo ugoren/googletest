@@ -915,6 +915,9 @@ using internal::FunctionMocker;
     THIRD(GTEST_CONCAT_TOKEN_(IS_TYPENAME_, attr), attr,)
 #define __GMOCK_ATTR_GET_CALLTYPE(attr) THIRD(GTEST_CONCAT_TOKEN_(IS_CALLTYPE_, attr), CAT(EXTRACT_CALLTYPE_, attr),)
 // XXX: Calltype(1, 2) expands to 1
+#define __GMOCK_ATTR_GET_OTHER(attr) THIRD(GTEST_CONCAT_TOKEN_(IS_CONST_, \
+    attr) GTEST_CONCAT_TOKEN_(IS_TYPENAME_, \
+    attr) GTEST_CONCAT_TOKEN_(IS_CALLTYPE_, attr),, attr)
 
  \
     #define __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_P99_SER(__GMOCK_ATTR_GET_CONST, \
@@ -923,6 +926,9 @@ using internal::FunctionMocker;
     __GMOCK_P99_SER(__GMOCK_ATTR_GET_TYPENAME, NOPAREN attrs)
 #define __GMOCK_ATTRS_GET_CALLTYPE(attrs) \
     __GMOCK_P99_SER(__GMOCK_ATTR_GET_CALLTYPE, NOPAREN attrs)
+ \
+    #define __GMOCK_ATTRS_GET_OTHER(attrs) __GMOCK_P99_SER(__GMOCK_ATTR_GET_OTHER, \
+    NOPAREN attrs)
 
 // MSVC needs this extra layer in case the parameters need to be expanded.
 #define __GMOCK_CONCAT_TOKEN_(x, y) GTEST_CONCAT_TOKEN_(x, y)
@@ -931,7 +937,8 @@ using internal::FunctionMocker;
  rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) Method( \
       __GMOCK_FIRST(nargs, T1 gmock_a1, T2 gmock_a2, T3 gmock_a3, \
           T4 gmock_a4, T5 gmock_a5, T6 gmock_a6, T7 gmock_a7, T8 gmock_a8, \
-          T9 gmock_a9, T10 gmock_a10)) __GMOCK_ATTRS_GET_CONST(attrs) { \
+          T9 gmock_a9, \
+          T10 gmock_a10)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
     GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
         Method).SetOwnerAndName(this, #Method); \
     return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \

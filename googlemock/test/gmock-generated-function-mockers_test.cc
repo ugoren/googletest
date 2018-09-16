@@ -109,6 +109,12 @@ class FooInterface {
    float g, double h, unsigned i, char* j, const std::string& k) = 0;
   STDMETHOD_(char, CTConst)(int x) const = 0;
 #endif  // GTEST_OS_WINDOWS
+
+#if GTEST_LANG_CXX11
+  virtual int NoExcept() noexcept = 0;
+  virtual int Override(int) = 0;
+  virtual int OverrideNoExcept(int a, bool b) noexcept = 0;
+#endif // GTEST_LANG_CXX11
 };
 
 // Const qualifiers on arguments were once (incorrectly) considered
@@ -171,6 +177,12 @@ class MockFoo : public FooInterface {
   MOCK_METHOD(MapIntString, CTReturnTypeWithComma, (), Calltype(STDMETHODCALLTYPE));
 #endif  // GTEST_OS_WINDOWS
 
+#if GTEST_LANG_CXX11
+  MOCK_METHOD(int, NoExcept, (), noexcept);
+  MOCK_METHOD(int, Override, (int), override);
+  MOCK_METHOD(int, OverrideNoExcept, (int, bool), noexcept override);
+#endif // GTEST_LANG_CXX11
+
  private:
   GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFoo);
 };
@@ -229,6 +241,13 @@ class MockFooBC : public FooInterface {
   MOCK_METHOD0_WITH_CALLTYPE(STDMETHODCALLTYPE, CTReturnTypeWithComma,
                              std::map<int, std::string>());
 #endif  // GTEST_OS_WINDOWS
+
+#if GTEST_LANG_CXX11
+  // BC macros don't support override and noexcept. But we must implement the methods.
+  int NoExcept() noexcept { return 0; }
+  int Override(int) noexcept { return 0; }
+  int OverrideNoExcept(int, bool) noexcept { return 0; }
+#endif // GTEST_LANG_CXX11
 
  private:
   GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFooBC);
@@ -407,6 +426,19 @@ TEST_F(FunctionMockerTest, MocksReturnTypeWithCommaAndCallType) {
 }
 
 #endif  // GTEST_OS_WINDOWS
+
+TEST_F(FunctionMockerTest, MockWithAttrs)
+{
+#if GTEST_LANG_CXX11
+  EXPECT_CALL(mock_foo_, NoExcept());
+  EXPECT_CALL(mock_foo_, Override(_));
+  EXPECT_CALL(mock_foo_, OverrideNoExcept(_, _));
+
+  EXPECT_EQ(0, mock_foo_.NoExcept());
+  EXPECT_EQ(0, mock_foo_.Override(1));
+  EXPECT_EQ(0, mock_foo_.OverrideNoExcept(2, false));
+#endif // GTEST_LANG_CXX11
+}
 
 // Repeat some MockFoo tests with MockFooBC
 class FunctionMockerBCTest : public testing::Test {
