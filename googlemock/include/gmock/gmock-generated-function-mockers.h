@@ -902,6 +902,7 @@ using internal::FunctionMocker;
 #define EXPAND(macro, args) macro args
 #define THIRD(...) EXPAND(THIRD2, (__VA_ARGS__))
 #define THIRD2(a, b, c, ...) c
+#define NOPAREN(...) __VA_ARGS__
 
 #define IS_CONST_const ,
 #define IS_TYPENAME_typename ,
@@ -915,31 +916,25 @@ using internal::FunctionMocker;
 #define __GMOCK_ATTR_GET_CALLTYPE(attr) THIRD(GTEST_CONCAT_TOKEN_(IS_CALLTYPE_, attr), CAT(EXTRACT_CALLTYPE_, attr),)
 // XXX: Calltype(1, 2) expands to 1
 
-#define __GMOCK_ATTRS_GET_MODIFIERS(...)	( \
-	__GMOCK_P99_SER(__GMOCK_ATTR_GET_CONST, __VA_ARGS__),		\
-	__GMOCK_P99_SER(__GMOCK_ATTR_GET_TYPENAME, __VA_ARGS__),	\
-	__GMOCK_P99_SER(__GMOCK_ATTR_GET_CALLTYPE, __VA_ARGS__)		\
-	)
-
-// "modifiers" is a 3-tuple - (constness,typename,calltype)
-#define __GMOCK_MOD_CONSTNESS(modifiers) __GMOCK_MOD_CONSTNESS_ modifiers
-#define __GMOCK_MOD_TYPENAME(modifiers)  __GMOCK_MOD_TYPENAME_  modifiers
-#define __GMOCK_MOD_CALLTYPE(modifiers)  __GMOCK_MOD_CALLTYPE_  modifiers
-#define __GMOCK_MOD_CONSTNESS_(constness, typename, calltype) constness
-#define __GMOCK_MOD_TYPENAME_(_constness, typename, calltype) typename
-#define __GMOCK_MOD_CALLTYPE_(_constness, typename, calltype) calltype
+ \
+    #define __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_P99_SER(__GMOCK_ATTR_GET_CONST, \
+    NOPAREN attrs)
+#define __GMOCK_ATTRS_GET_TYPENAME(attrs) \
+    __GMOCK_P99_SER(__GMOCK_ATTR_GET_TYPENAME, NOPAREN attrs)
+#define __GMOCK_ATTRS_GET_CALLTYPE(attrs) \
+    __GMOCK_P99_SER(__GMOCK_ATTR_GET_CALLTYPE, NOPAREN attrs)
 
 // MSVC needs this extra layer in case the parameters need to be expanded.
 #define __GMOCK_CONCAT_TOKEN_(x, y) GTEST_CONCAT_TOKEN_(x, y)
-#define GMOCK_METHOD_BASE(modifiers, nargs, Method, rtype, T1, T2, T3, T4, \
-    T5, T6, T7, T8, T9, T10) \
- rtype __GMOCK_MOD_CALLTYPE(modifiers) Method( \
+#define GMOCK_METHOD_BASE(nargs, Method, rtype, attrs, T1, T2, T3, T4, T5, \
+    T6, T7, T8, T9, T10) \
+ rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) Method( \
       __GMOCK_FIRST(nargs, T1 gmock_a1, T2 gmock_a2, T3 gmock_a3, \
           T4 gmock_a4, T5 gmock_a5, T6 gmock_a6, T7 gmock_a7, T8 gmock_a8, \
-          T9 gmock_a9, T10 gmock_a10)) __GMOCK_MOD_CONSTNESS(modifiers) { \
-    GMOCK_MOCKER_EXPAND(nargs, __GMOCK_MOD_CONSTNESS(modifiers), \
+          T9 gmock_a9, T10 gmock_a10)) __GMOCK_ATTRS_GET_CONST(attrs) { \
+    GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
         Method).SetOwnerAndName(this, #Method); \
-    return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_MOD_CONSTNESS(modifiers), \
+    return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
         Method).Invoke(__GMOCK_FIRST(nargs, \
         ::testing::internal::forward<T1>(gmock_a1), \
         ::testing::internal::forward<T2>(gmock_a2), \
@@ -965,10 +960,10 @@ using internal::FunctionMocker;
                      const ::testing::Matcher<T8>& gmock_a8, \
                      const ::testing::Matcher<T9>& gmock_a9, \
                      const ::testing::Matcher<T10>& gmock_a10)) \
-                         __GMOCK_MOD_CONSTNESS(modifiers) { \
-    GMOCK_MOCKER_EXPAND(nargs, __GMOCK_MOD_CONSTNESS(modifiers), \
+                         __GMOCK_ATTRS_GET_CONST(attrs) { \
+    GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
         Method).RegisterOwner(this); \
-    return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_MOD_CONSTNESS(modifiers), \
+    return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
         Method).With(__GMOCK_FIRST(nargs, gmock_a1, gmock_a2, gmock_a3, \
         gmock_a4, gmock_a5, gmock_a6, gmock_a7, gmock_a8, gmock_a9, \
         gmock_a10)); \
@@ -976,11 +971,11 @@ using internal::FunctionMocker;
   ::testing::MockSpec<rtype(__GMOCK_FIRST(nargs, T1, T2, T3, T4, T5, T6, T7, \
       T8, T9, T10))> \
   gmock_##Method(const ::testing::internal::WithoutMatchers&, \
-      __GMOCK_MOD_CONSTNESS(modifiers) \
+      __GMOCK_ATTRS_GET_CONST(attrs) \
           ::testing::internal::Function<rtype(__GMOCK_FIRST(nargs, T1, T2, \
           T3, T4, T5, T6, T7, T8, T9, T10))>* const) { \
     return ::testing::internal::__GMOCK_CONCAT_TOKEN_(AdjustConstness_, \
-        __GMOCK_MOD_CONSTNESS(modifiers))(this)-> \
+        __GMOCK_ATTRS_GET_CONST(attrs))(this)-> \
       gmock_##Method(__GMOCK_FIRST(nargs, ::testing::A<T1>(), \
           ::testing::A<T2>(), ::testing::A<T3>(), ::testing::A<T4>(), \
           ::testing::A<T5>(), ::testing::A<T6>(), ::testing::A<T7>(), \
@@ -988,491 +983,481 @@ using internal::FunctionMocker;
   } \
   mutable ::testing::FunctionMocker<rtype(__GMOCK_FIRST(nargs, T1, T2, T3, \
       T4, T5, T6, T7, T8, T9, T10))> GMOCK_MOCKER_EXPAND(nargs, \
-      __GMOCK_MOD_CONSTNESS(modifiers), Method)
+      __GMOCK_ATTRS_GET_CONST(attrs), Method)
 
 
-#define MOCK_METHOD_NEW_BASE(modifiers, rtype, m, args) \
-    GMOCK_METHOD_BASE(modifiers, __GMOCK_NARGS args, m, rtype,		\
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, rtype args), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, rtype args)		\
+#define MOCK_METHOD_NEW_BASE(rtype, m, args, attrs) \
+    GMOCK_METHOD_BASE(__GMOCK_NARGS args, m, rtype,	attrs,	\
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, rtype args), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, rtype args)		\
     )
 
-#define MOCK_METHOD_BC_BASE0(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 0, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE0(attrs, m, ...) \
+    GMOCK_METHOD_BASE(0, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE1(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 1, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE1(attrs, m, ...) \
+    GMOCK_METHOD_BASE(1, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE2(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 2, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE2(attrs, m, ...) \
+    GMOCK_METHOD_BASE(2, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE3(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 3, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE3(attrs, m, ...) \
+    GMOCK_METHOD_BASE(3, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE4(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 4, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE4(attrs, m, ...) \
+    GMOCK_METHOD_BASE(4, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE5(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 5, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE5(attrs, m, ...) \
+    GMOCK_METHOD_BASE(5, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE6(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 6, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE6(attrs, m, ...) \
+    GMOCK_METHOD_BASE(6, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE7(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 7, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE7(attrs, m, ...) \
+    GMOCK_METHOD_BASE(7, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE8(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 8, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE8(attrs, m, ...) \
+    GMOCK_METHOD_BASE(8, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE9(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 9, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE9(attrs, m, ...) \
+    GMOCK_METHOD_BASE(9, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD_BC_BASE10(modifiers, m, ...) \
-    GMOCK_METHOD_BASE(modifiers, 10, m, \
-        GMOCK_RESULT_(__GMOCK_MOD_TYPENAME(modifiers), \
-            GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
+#define MOCK_METHOD_BC_BASE10(attrs, m, ...) \
+    GMOCK_METHOD_BASE(10, m, \
+        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), \
+            GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
             void(__VA_ARGS__))), \
-  GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 2, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 3, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 4, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 5, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 6, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 7, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 8, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 9, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))), \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 10, \
-      GMOCK_ARG_(__GMOCK_MOD_TYPENAME(modifiers), 1, void(__VA_ARGS__))) \
+        attrs, \
+  GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 2, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 3, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 4, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 5, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 6, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 7, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 8, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 9, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 10, \
+      GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))) \
     )
 
-#define MOCK_METHOD(rtype, m, args, \
-    ...) MOCK_METHOD_NEW_BASE(__GMOCK_ATTRS_GET_MODIFIERS(__VA_ARGS__), \
-    rtype, m, args)
-#define MOCK_METHOD0(m, ...) MOCK_METHOD_BC_BASE0((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD1(m, ...) MOCK_METHOD_BC_BASE1((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD2(m, ...) MOCK_METHOD_BC_BASE2((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD3(m, ...) MOCK_METHOD_BC_BASE3((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD4(m, ...) MOCK_METHOD_BC_BASE4((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD5(m, ...) MOCK_METHOD_BC_BASE5((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD6(m, ...) MOCK_METHOD_BC_BASE6((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD7(m, ...) MOCK_METHOD_BC_BASE7((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD8(m, ...) MOCK_METHOD_BC_BASE8((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD9(m, ...) MOCK_METHOD_BC_BASE9((,,),  m, __VA_ARGS__)
-#define MOCK_METHOD10(m, ...) MOCK_METHOD_BC_BASE10((,,),  m, __VA_ARGS__)
-#define MOCK_CONST_METHOD0(m, ...) MOCK_METHOD_BC_BASE0((const,,), m, \
+#define MOCK_METHOD(rtype, m, args, ...) MOCK_METHOD_NEW_BASE(rtype, m, args, \
+    (__VA_ARGS__))
+#define MOCK_METHOD0(m, ...) MOCK_METHOD_BC_BASE0((),  m, __VA_ARGS__)
+#define MOCK_METHOD1(m, ...) MOCK_METHOD_BC_BASE1((),  m, __VA_ARGS__)
+#define MOCK_METHOD2(m, ...) MOCK_METHOD_BC_BASE2((),  m, __VA_ARGS__)
+#define MOCK_METHOD3(m, ...) MOCK_METHOD_BC_BASE3((),  m, __VA_ARGS__)
+#define MOCK_METHOD4(m, ...) MOCK_METHOD_BC_BASE4((),  m, __VA_ARGS__)
+#define MOCK_METHOD5(m, ...) MOCK_METHOD_BC_BASE5((),  m, __VA_ARGS__)
+#define MOCK_METHOD6(m, ...) MOCK_METHOD_BC_BASE6((),  m, __VA_ARGS__)
+#define MOCK_METHOD7(m, ...) MOCK_METHOD_BC_BASE7((),  m, __VA_ARGS__)
+#define MOCK_METHOD8(m, ...) MOCK_METHOD_BC_BASE8((),  m, __VA_ARGS__)
+#define MOCK_METHOD9(m, ...) MOCK_METHOD_BC_BASE9((),  m, __VA_ARGS__)
+#define MOCK_METHOD10(m, ...) MOCK_METHOD_BC_BASE10((),  m, __VA_ARGS__)
+#define MOCK_CONST_METHOD0(m, ...) MOCK_METHOD_BC_BASE0((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD1(m, ...) MOCK_METHOD_BC_BASE1((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD2(m, ...) MOCK_METHOD_BC_BASE2((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD3(m, ...) MOCK_METHOD_BC_BASE3((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD4(m, ...) MOCK_METHOD_BC_BASE4((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD5(m, ...) MOCK_METHOD_BC_BASE5((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD6(m, ...) MOCK_METHOD_BC_BASE6((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD7(m, ...) MOCK_METHOD_BC_BASE7((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD8(m, ...) MOCK_METHOD_BC_BASE8((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD9(m, ...) MOCK_METHOD_BC_BASE9((const), m, __VA_ARGS__)
+#define MOCK_CONST_METHOD10(m, ...) MOCK_METHOD_BC_BASE10((const), m, \
     __VA_ARGS__)
-#define MOCK_CONST_METHOD1(m, ...) MOCK_METHOD_BC_BASE1((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD2(m, ...) MOCK_METHOD_BC_BASE2((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD3(m, ...) MOCK_METHOD_BC_BASE3((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD4(m, ...) MOCK_METHOD_BC_BASE4((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD5(m, ...) MOCK_METHOD_BC_BASE5((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD6(m, ...) MOCK_METHOD_BC_BASE6((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD7(m, ...) MOCK_METHOD_BC_BASE7((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD8(m, ...) MOCK_METHOD_BC_BASE8((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD9(m, ...) MOCK_METHOD_BC_BASE9((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_CONST_METHOD10(m, ...) MOCK_METHOD_BC_BASE10((const,,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD0_T(m, ...) MOCK_METHOD_BC_BASE0((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD1_T(m, ...) MOCK_METHOD_BC_BASE1((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD2_T(m, ...) MOCK_METHOD_BC_BASE2((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD3_T(m, ...) MOCK_METHOD_BC_BASE3((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD4_T(m, ...) MOCK_METHOD_BC_BASE4((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD5_T(m, ...) MOCK_METHOD_BC_BASE5((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD6_T(m, ...) MOCK_METHOD_BC_BASE6((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD7_T(m, ...) MOCK_METHOD_BC_BASE7((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD8_T(m, ...) MOCK_METHOD_BC_BASE8((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD9_T(m, ...) MOCK_METHOD_BC_BASE9((,typename,), m, \
-    __VA_ARGS__)
-#define MOCK_METHOD10_T(m, ...) MOCK_METHOD_BC_BASE10((,typename,), m, \
+#define MOCK_METHOD0_T(m, ...) MOCK_METHOD_BC_BASE0((typename), m, __VA_ARGS__)
+#define MOCK_METHOD1_T(m, ...) MOCK_METHOD_BC_BASE1((typename), m, __VA_ARGS__)
+#define MOCK_METHOD2_T(m, ...) MOCK_METHOD_BC_BASE2((typename), m, __VA_ARGS__)
+#define MOCK_METHOD3_T(m, ...) MOCK_METHOD_BC_BASE3((typename), m, __VA_ARGS__)
+#define MOCK_METHOD4_T(m, ...) MOCK_METHOD_BC_BASE4((typename), m, __VA_ARGS__)
+#define MOCK_METHOD5_T(m, ...) MOCK_METHOD_BC_BASE5((typename), m, __VA_ARGS__)
+#define MOCK_METHOD6_T(m, ...) MOCK_METHOD_BC_BASE6((typename), m, __VA_ARGS__)
+#define MOCK_METHOD7_T(m, ...) MOCK_METHOD_BC_BASE7((typename), m, __VA_ARGS__)
+#define MOCK_METHOD8_T(m, ...) MOCK_METHOD_BC_BASE8((typename), m, __VA_ARGS__)
+#define MOCK_METHOD9_T(m, ...) MOCK_METHOD_BC_BASE9((typename), m, __VA_ARGS__)
+#define MOCK_METHOD10_T(m, ...) MOCK_METHOD_BC_BASE10((typename), m, \
     __VA_ARGS__)
 #define MOCK_CONST_METHOD0_T(m, ...) \
-    MOCK_METHOD_BC_BASE0((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE0((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD1_T(m, ...) \
-    MOCK_METHOD_BC_BASE1((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE1((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD2_T(m, ...) \
-    MOCK_METHOD_BC_BASE2((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE2((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD3_T(m, ...) \
-    MOCK_METHOD_BC_BASE3((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE3((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD4_T(m, ...) \
-    MOCK_METHOD_BC_BASE4((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE4((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD5_T(m, ...) \
-    MOCK_METHOD_BC_BASE5((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE5((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD6_T(m, ...) \
-    MOCK_METHOD_BC_BASE6((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE6((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD7_T(m, ...) \
-    MOCK_METHOD_BC_BASE7((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE7((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD8_T(m, ...) \
-    MOCK_METHOD_BC_BASE8((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE8((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD9_T(m, ...) \
-    MOCK_METHOD_BC_BASE9((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE9((const,typename), m, __VA_ARGS__)
 #define MOCK_CONST_METHOD10_T(m, ...) \
-    MOCK_METHOD_BC_BASE10((const,typename,), m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE10((const,typename), m, __VA_ARGS__)
 #define MOCK_METHOD0_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE0((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE0((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD1_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE1((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE1((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD2_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE2((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE2((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD3_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE3((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE3((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD4_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE4((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE4((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD5_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE5((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE5((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD6_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE6((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE6((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD7_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE7((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE7((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD8_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE8((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE8((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD9_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE9((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE9((Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD10_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE10((,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE10((Calltype(ct)),  m, __VA_ARGS__)
 
 #define MOCK_CONST_METHOD0_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE0((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE0((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD1_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE1((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE1((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD2_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE2((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE2((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD3_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE3((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE3((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD4_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE4((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE4((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD5_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE5((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE5((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD6_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE6((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE6((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD7_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE7((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE7((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD8_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE8((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE8((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD9_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE9((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE9((const,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD10_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE10((const,,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE10((const,Calltype(ct)),  m, __VA_ARGS__)
 
 #define MOCK_METHOD0_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE0((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE0((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD1_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE1((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE1((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD2_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE2((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE2((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD3_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE3((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE3((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD4_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE4((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE4((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD5_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE5((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE5((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD6_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE6((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE6((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD7_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE7((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE7((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD8_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE8((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE8((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD9_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE9((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE9((typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_METHOD10_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE10((,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE10((typename,Calltype(ct)),  m, __VA_ARGS__)
 
 #define MOCK_CONST_METHOD0_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE0((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE0((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD1_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE1((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE1((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD2_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE2((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE2((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD3_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE3((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE3((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD4_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE4((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE4((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD5_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE5((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE5((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD6_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE6((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE6((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD7_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE7((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE7((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD8_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE8((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE8((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD9_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE9((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE9((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 #define MOCK_CONST_METHOD10_T_WITH_CALLTYPE(ct, m, ...) \
-    MOCK_METHOD_BC_BASE10((const,typename,ct),  m, __VA_ARGS__)
+    MOCK_METHOD_BC_BASE10((const,typename,Calltype(ct)),  m, __VA_ARGS__)
 
 // A MockFunction<F> class has one mock method whose type is F.  It is
 // useful when you just want your test code to emit some messages and
