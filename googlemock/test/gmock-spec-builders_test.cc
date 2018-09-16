@@ -161,7 +161,7 @@ class MockB {
  public:
   MockB() {}
 
-  MOCK_CONST_METHOD(int, DoB, ());  // NOLINT
+  MOCK_METHOD(int, DoB, (), const);  // NOLINT
   MOCK_METHOD(int, DoB, (int n));  // NOLINT
 
  private:
@@ -2713,8 +2713,8 @@ TEST(ParameterlessExpectationsTest, CanSetExpectationsForOverloadedMethods) {
 
 struct MockWithConstMethods {
  public:
-  MOCK_CONST_METHOD(int, Foo, (int));
-  MOCK_CONST_METHOD(int, Bar, (int, const char*));
+  MOCK_METHOD(int, Foo, (int), const);
+  MOCK_METHOD(int, Bar, (int, const char*), const);
 };
 
 TEST(ParameterlessExpectationsTest, CanSetExpectationsForConstMethods) {
@@ -2729,7 +2729,7 @@ TEST(ParameterlessExpectationsTest, CanSetExpectationsForConstMethods) {
 class MockConstOverload {
  public:
   MOCK_METHOD(int, Overloaded, (int));
-  MOCK_CONST_METHOD(int, Overloaded, (int));
+  MOCK_METHOD(int, Overloaded, (int), const);
 };
 
 TEST(ParameterlessExpectationsTest,

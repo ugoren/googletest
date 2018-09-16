@@ -219,6 +219,26 @@ $var anything_matchers = [[$for j, \
 
 ]]
 
+// XXX: Ugly macros, try to replace with p99 stuff.
+#define EXPAND(macro, args) macro args
+#define THIRD(...) EXPAND(THIRD2, (__VA_ARGS__))
+#define THIRD2(a, b, c, ...) c
+
+#define IS_CONST_const ,
+#define IS_TYPENAME_typename ,
+#define IS_CALLTYPE_Calltype(...) ,
+#define EXTRACT_CALLTYPE_Calltype(...) __VA_ARGS__
+
+#define __GMOCK_ATTR_GET_CONST(attr) THIRD(GTEST_CONCAT_TOKEN_(IS_CONST_, attr), attr,)
+#define __GMOCK_ATTR_GET_TYPENAME(attr) THIRD(GTEST_CONCAT_TOKEN_(IS_TYPENAME_, attr), attr,)
+#define __GMOCK_ATTR_GET_CALLTYPE(attr) THIRD(GTEST_CONCAT_TOKEN_(IS_CALLTYPE_, attr), CAT(EXTRACT_CALLTYPE_, attr),)	// XXX: Calltype(1, 2) expands to 1
+
+#define __GMOCK_ATTRS_GET_MODIFIERS(...)	( \
+	__GMOCK_P99_SER(__GMOCK_ATTR_GET_CONST, __VA_ARGS__),		\
+	__GMOCK_P99_SER(__GMOCK_ATTR_GET_TYPENAME, __VA_ARGS__),	\
+	__GMOCK_P99_SER(__GMOCK_ATTR_GET_CALLTYPE, __VA_ARGS__)		\
+	)
+
 // "modifiers" is a 3-tuple - (constness,typename,calltype)
 #define __GMOCK_MOD_CONSTNESS(modifiers) __GMOCK_MOD_CONSTNESS_ modifiers
 #define __GMOCK_MOD_TYPENAME(modifiers)  __GMOCK_MOD_TYPENAME_  modifiers
@@ -273,37 +293,28 @@ $for i [[
 
 ]]
 
-#define MOCK_METHOD(rtype, m, args) MOCK_METHOD_NEW_BASE((,,), rtype, m, args)
+#define MOCK_METHOD(rtype, m, args, ...) MOCK_METHOD_NEW_BASE(__GMOCK_ATTRS_GET_MODIFIERS(__VA_ARGS__), rtype, m, args)
 
 $for i [[
 #define MOCK_METHOD$i(m, ...) MOCK_METHOD_BC_BASE$i((,,),  m, __VA_ARGS__)
 
 ]]
 
-#define MOCK_CONST_METHOD(rtype, m, args) MOCK_METHOD_NEW_BASE((const,,), rtype, m, args)
-
 $for i [[
 #define MOCK_CONST_METHOD$i(m, ...) MOCK_METHOD_BC_BASE$i((const,,), m, __VA_ARGS__)
 
 ]]
-
-#define MOCK_METHOD_T(rtype, m, args) MOCK_METHOD_NEW_BASE((,typename,), rtype, m, args)
 
 $for i [[
 #define MOCK_METHOD$i[[]]_T(m, ...) MOCK_METHOD_BC_BASE$i((,typename,), m, __VA_ARGS__)
 
 ]]
 
-#define MOCK_CONST_METHOD_T(rtype, m, args) MOCK_METHOD_NEW_BASE((const,typename,), rtype, m, args)
-
 $for i [[
 #define MOCK_CONST_METHOD$i[[]]_T(m, ...) \
     MOCK_METHOD_BC_BASE$i((const,typename,), m, __VA_ARGS__)
 
 ]]
-
-
-#define MOCK_METHOD_WITH_CALLTYPE(ct, rtype, m, args) MOCK_METHOD_NEW_BASE((,,ct), rtype, m, args)
 
 $for i [[
 #define MOCK_METHOD$i[[]]_WITH_CALLTYPE(ct, m, ...) \
@@ -312,8 +323,6 @@ $for i [[
 ]]
 
 
-#define MOCK_CONST_METHOD_WITH_CALLTYPE(ct, rtype, m, args) MOCK_METHOD_NEW_BASE((const,,ct), rtype, m, args)
-
 $for i [[
 #define MOCK_CONST_METHOD$i[[]]_WITH_CALLTYPE(ct, m, ...) \
     MOCK_METHOD_BC_BASE$i((const,,ct),  m, __VA_ARGS__)
@@ -321,16 +330,12 @@ $for i [[
 ]]
 
 
-#define MOCK_METHOD_T_WITH_CALLTYPE(ct, rtype, m, args) MOCK_METHOD_NEW_BASE((,typename,ct), rtype, m, args)
-
 $for i [[
 #define MOCK_METHOD$i[[]]_T_WITH_CALLTYPE(ct, m, ...) \
     MOCK_METHOD_BC_BASE$i((,typename,ct),  m, __VA_ARGS__)
 
 ]]
 
-
-#define MOCK_CONST_METHOD_T_WITH_CALLTYPE(ct, rtype, m, args) MOCK_METHOD_NEW_BASE((const,typename,ct), rtype, m, args)
 
 $for i [[
 #define MOCK_CONST_METHOD$i[[]]_T_WITH_CALLTYPE(ct, m, ...) \
