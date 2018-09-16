@@ -175,4 +175,14 @@ TEST(ArgumentMacros, FirstN)
 #undef X
 }
 
+TEST(SerMacro, Map) {
+#define ADD_PLUS(x) +x
+	EXPECT_EQ(0,  0 __GMOCK_P99_SER(ADD_PLUS));
+	EXPECT_EQ(1,  0 __GMOCK_P99_SER(ADD_PLUS, 1));
+	EXPECT_EQ(3,  0 __GMOCK_P99_SER(ADD_PLUS, 1, 2));
+	EXPECT_EQ(6,  0 __GMOCK_P99_SER(ADD_PLUS, 1, 2, 3));
+	EXPECT_EQ(10, 0 __GMOCK_P99_SER(ADD_PLUS, 1, 2, 3, 4));
+#undef ADD_PLUS
+}
+
 }  // Unnamed namespace

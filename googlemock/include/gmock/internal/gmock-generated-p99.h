@@ -41,6 +41,13 @@
 #define GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_
 
 //
+// Taken from p99_block.h
+//
+
+#define __GMOCK_P00_ROBUST(...) __VA_ARGS__
+
+
+//
 // Taken from p99_paste.h
 //
 
@@ -120,6 +127,33 @@
 #define __GMOCK_P00_PRE8(_0, ...) _0, __GMOCK_P00_PRE7(__VA_ARGS__)
 #define __GMOCK_P00_PRE9(_0, ...) _0, __GMOCK_P00_PRE8(__VA_ARGS__)
 #define __GMOCK_P00_PRE10(_0, ...) _0, __GMOCK_P00_PRE9(__VA_ARGS__)
+#define __GMOCK_P00_MAP_2(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_1(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_3(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_2(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_4(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_3(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_5(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_4(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_6(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_5(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_7(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_6(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_8(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_7(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_9(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_8(MAC, SEP, \
+    __VA_ARGS__)
+#define __GMOCK_P00_MAP_10(MAC, SEP, X, \
+    ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_9(MAC, SEP, \
+    __VA_ARGS__)
 
 //
 // Taken from p99_args.h
@@ -242,5 +276,36 @@ __GMOCK_P00_ISEMPTY( \
 #define __GMOCK_P99_SELS(N, ...) __GMOCK_P99_PASTE2(__GMOCK_P00_PRE, \
     N)(__VA_ARGS__)
 
+// Helpers for __GMOCK_P99_SER
+
+#define __GMOCK_P00_MAP_1(MAC, SEP, ...) MAC(__VA_ARGS__)
+#define __GMOCK_P00_MAP_0(...)
+
+#define __GMOCK_P00_MAP_0_(N, MAC, SEP, ...) __GMOCK_P00_MAP_ ## N(MAC, SEP, \
+    __VA_ARGS__)
+
+#define __GMOCK_P00_MAP_(...) __GMOCK_P00_MAP_0_(__VA_ARGS__)
+
+//
+// Taken from p99_for.h
+//
+
+/**
+ ** @brief Apply the macro @a MACRO to the rest of the argument list.
+ **
+ ** The macro is called with each of the other arguments and
+ ** the results are separated by a space token.
+ **
+ ** @see P99_UNROLL for a similar macro that applies @a MACRO a fixed number of
+     times
+ ** @see P99_SEQ for a similar macro that separates the different parts with a
+     @c ,
+ ** @see P99_SER for a similar macro that separates the different parts with a
+     space token
+ ** @see P99_FOR for a more generic and flexible utility
+ **/
+#define __GMOCK_P99_SER(MACRO, \
+    ...) __GMOCK_P00_MAP_(__GMOCK_P99_NARG(__VA_ARGS__), MACRO, ( ), \
+    __VA_ARGS__)
 
 #endif // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_
