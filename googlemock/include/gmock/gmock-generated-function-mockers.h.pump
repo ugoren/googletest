@@ -183,42 +183,6 @@ using internal::FunctionMocker;
 #define GMOCK_MOCKER_EXPAND(arity, constness, Method) GMOCK_MOCKER_EXPAND2(arity, constness, Method)
 #define GMOCK_MOCKER_EXPAND2(arity, constness, Method) GMOCK_MOCKER_(arity, constness, Method)
 
-$for i [[
-$range j 1..i
-$var arg_as = [[$for j, [[GMOCK_ARG_(tn, $j, __VA_ARGS__) gmock_a$j]]]]
-$var as = [[$for j, \
-  [[::testing::internal::forward<GMOCK_ARG_(tn, $j, __VA_ARGS__)>(gmock_a$j)]]]]
-$var matcher_arg_as = [[$for j, \
-                     [[GMOCK_MATCHER_(tn, $j, __VA_ARGS__) gmock_a$j]]]]
-$var matcher_as = [[$for j, [[gmock_a$j]]]]
-$var anything_matchers = [[$for j, \
-                     [[::testing::A<GMOCK_ARG_(tn, $j, __VA_ARGS__)>()]]]]
-// INTERNAL IMPLEMENTATION - DON'T USE IN USER CODE!!!
-#define GMOCK_METHOD$i[[]]_(tn, constness, ct, Method, ...) \
-  GMOCK_RESULT_(tn, __VA_ARGS__) ct Method( \
-      $arg_as) constness { \
-    GTEST_COMPILE_ASSERT_((::testing::tuple_size<                          \
-        tn ::testing::internal::Function<__VA_ARGS__>::ArgumentTuple>::value == $i), \
-        this_method_does_not_take_$i[[]]_argument[[$if i != 1 [[s]]]]); \
-    GMOCK_MOCKER_($i, constness, Method).SetOwnerAndName(this, #Method); \
-    return GMOCK_MOCKER_($i, constness, Method).Invoke($as); \
-  } \
-  ::testing::MockSpec<__VA_ARGS__> \
-      gmock_##Method($matcher_arg_as) constness { \
-    GMOCK_MOCKER_($i, constness, Method).RegisterOwner(this); \
-    return GMOCK_MOCKER_($i, constness, Method).With($matcher_as); \
-  } \
-  ::testing::MockSpec<__VA_ARGS__> gmock_##Method( \
-      const ::testing::internal::WithoutMatchers&, \
-      constness ::testing::internal::Function<__VA_ARGS__>* ) const { \
-        return ::testing::internal::AdjustConstness_##constness(this)-> \
-            gmock_##Method($anything_matchers); \
-      } \
-  mutable ::testing::FunctionMocker<__VA_ARGS__> GMOCK_MOCKER_($i, constness, Method)
-
-
-]]
-
 // XXX: Ugly macros, try to replace with p99 stuff.
 #define EXPAND(macro, args) macro args
 #define THIRD(...) EXPAND(THIRD2, (__VA_ARGS__))
