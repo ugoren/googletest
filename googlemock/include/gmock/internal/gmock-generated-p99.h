@@ -308,4 +308,8 @@ __GMOCK_P00_ISEMPTY( \
     ...) __GMOCK_P00_MAP_(__GMOCK_P99_NARG(__VA_ARGS__), MACRO, ( ), \
     __VA_ARGS__)
 
+#define __GMOCK_P99_SEQ(MACRO, \
+    ...) __GMOCK_P00_MAP_(__GMOCK_P99_NARG(__VA_ARGS__), MACRO, (,), \
+    __VA_ARGS__)
+
 #endif // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_

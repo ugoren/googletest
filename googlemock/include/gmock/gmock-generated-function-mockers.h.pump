@@ -169,6 +169,11 @@ using internal::FunctionMocker;
 #define GMOCK_ARG_(tn, N, ...) \
     tn ::testing::internal::Function<__VA_ARGS__>::Argument##N
 
+// Type type of a single argument (type and optional name)
+// GMOCK_ARG_TYPE(int) = GMOCK_ARG_TYPE(int a) = int
+// XXX: typename should be conditional
+#define GMOCK_ARG_TYPE(a) GMOCK_ARG_(typename, 1, void(a))
+
 // The matcher type for argument N of the given function type.
 // INTERNAL IMPLEMENTATION - DON'T USE IN USER CODE!!!
 #define GMOCK_MATCHER_(tn, N, ...) \
@@ -188,6 +193,7 @@ using internal::FunctionMocker;
 #define THIRD(...) EXPAND(THIRD2, (__VA_ARGS__))
 #define THIRD2(a, b, c, ...) c
 #define NOPAREN(...) __VA_ARGS__
+#define NOPAREN2(...) __VA_ARGS__
 
 #define IS_CONST_const ,
 #define IS_TYPENAME_typename ,
@@ -207,46 +213,61 @@ using internal::FunctionMocker;
 // MSVC needs this extra layer in case the parameters need to be expanded.
 #define __GMOCK_CONCAT_TOKEN_(x, y) GTEST_CONCAT_TOKEN_(x, y)
 
+#define REP(MACRO, ARG) MACRO(ARG, 0), MACRO(ARG, 1), MACRO(ARG, 2), MACRO(ARG, 3), MACRO(ARG, 4), \
+                        MACRO(ARG, 5), MACRO(ARG, 6), MACRO(ARG, 7), MACRO(ARG, 8), MACRO(ARG, 9)
+#define REPN(N, MACRO, ARG) __GMOCK_FIRST(N, REP(MACRO, ARG))
+#define GETN(N, L) __GMOCK_CONCAT_TOKEN_(GETN_, N) L
+
 $range k 1..n
-$var gen_arg_types = [[$for k, [[T$k]]]]
-$var gen_arg_as = [[$for k, [[T$k gmock_a$k]]]]
-$var gen_as = [[$for k, [[gmock_a$k]]]]
-$var gen_matcher_as = [[$for k, \
-                     [[const ::testing::Matcher<T$k>& gmock_a$k]]]]
-$var forward_as = [[$for k, [[::testing::internal::forward<T$k>(gmock_a$k)]]]]
-$var anything_matchers = [[$for k, [[::testing::A<T$k>()]]]]
-#define GMOCK_METHOD_BASE(nargs, Method, rtype, attrs, $gen_arg_types) \
- rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) Method( \
-      __GMOCK_FIRST(nargs, $gen_arg_as)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
-    GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method).SetOwnerAndName(this, #Method); \
-    return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method).Invoke(__GMOCK_FIRST(nargs, $forward_as)); \
+
+#define GETN_0(a, ...) a
+
+$for k [[
+$var kminus1=k-1
+#define GETN_$k(a, ...) GETN_$kminus1(__VA_ARGS__)
+
+]]
+
+#define __GMOCK_MOCKER_NAME(method, nargs, attrs) GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), method)
+#define GMOCK_ARGN_NAME(args, n) __GMOCK_CONCAT_TOKEN_(gmock_a, n)
+#define GMOCK_ARGN_DECL(args, n) GETN(n, args) GMOCK_ARGN_NAME(args, n)
+#define GMOCK_ARGN_M_DECL(args, n) const ::testing::Matcher<GETN(n, args)> GMOCK_ARGN_NAME(args, n)
+#define GMOCK_ARGN_FORWARD(args, n) ::testing::internal::forward<GETN(n, args)>(GMOCK_ARGN_NAME(args, n))
+#define GMOCK_ANYMATCHER(arg) ::testing::A<arg>()
+
+#define GMOCK_METHOD_BASE(nargs, Method, rtype, arg_types, signature, attrs) \
+  rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) \
+  Method(REPN(nargs, GMOCK_ARGN_DECL, arg_types)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
+    __GMOCK_MOCKER_NAME(Method, nargs, attrs).SetOwnerAndName(this, #Method); \
+    return __GMOCK_MOCKER_NAME(Method, nargs, attrs).Invoke(REPN(nargs, GMOCK_ARGN_FORWARD, arg_types)); \
   } \
-  ::testing::MockSpec<rtype(__GMOCK_FIRST(nargs, $gen_arg_types))> \
-      gmock_##Method(__GMOCK_FIRST(nargs, $gen_matcher_as)) __GMOCK_ATTRS_GET_CONST(attrs) { \
-    GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method).RegisterOwner(this); \
-    return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method).With(__GMOCK_FIRST(nargs, $gen_as)); \
+  ::testing::MockSpec<NOPAREN signature> \
+      gmock_##Method(REPN(nargs, GMOCK_ARGN_M_DECL, arg_types)) __GMOCK_ATTRS_GET_CONST(attrs) { \
+    __GMOCK_MOCKER_NAME(Method, nargs, attrs).RegisterOwner(this); \
+    return __GMOCK_MOCKER_NAME(Method, nargs, attrs).With(REPN(nargs, GMOCK_ARGN_NAME, arg_types)); \
   } \
-  ::testing::MockSpec<rtype(__GMOCK_FIRST(nargs, $gen_arg_types))> \
+  ::testing::MockSpec<NOPAREN signature> \
   gmock_##Method(const ::testing::internal::WithoutMatchers&, \
-      __GMOCK_ATTRS_GET_CONST(attrs) ::testing::internal::Function<rtype(__GMOCK_FIRST(nargs, $gen_arg_types))>* const) { \
+      __GMOCK_ATTRS_GET_CONST(attrs) ::testing::internal::Function<NOPAREN signature>* = 0) const { \
     return ::testing::internal::__GMOCK_CONCAT_TOKEN_(AdjustConstness_, __GMOCK_ATTRS_GET_CONST(attrs))(this)-> \
-      gmock_##Method(__GMOCK_FIRST(nargs, $anything_matchers)); \
+      gmock_##Method(__GMOCK_P99_SEQ(GMOCK_ANYMATCHER, NOPAREN arg_types)); \
   } \
-  mutable ::testing::FunctionMocker<rtype(__GMOCK_FIRST(nargs, $gen_arg_types))> GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method)
+  mutable ::testing::FunctionMocker<NOPAREN signature> __GMOCK_MOCKER_NAME(Method, nargs, attrs)
      
 
 #define MOCK_METHOD_NEW_BASE(rtype, m, args, attrs) \
-    GMOCK_METHOD_BASE(__GMOCK_NARGS args, m, rtype,	attrs,	\
-		[[$for k, [[GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), $k, rtype args)]]]]		\
-    )
+    GMOCK_METHOD_BASE(__GMOCK_NARGS args, m, rtype, (__GMOCK_P99_SEQ(GMOCK_ARG_TYPE, NOPAREN2 args)), (rtype args), attrs)
+
+#define GMOCK_WRAP_RTYPE(typename, ...)  GMOCK_RESULT_(typename, GMOCK_ARG_(typename, 1, void(__VA_ARGS__)))
 
 $for i [[
 
 #define MOCK_METHOD_BC_BASE$i(attrs, m, ...) \
     GMOCK_METHOD_BASE($i, m, \
-        GMOCK_RESULT_(__GMOCK_ATTRS_GET_TYPENAME(attrs), GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__))), \
-        attrs, \
-		[[$for k, [[GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), $k, GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__)))]]]] \
+        GMOCK_WRAP_RTYPE(__GMOCK_ATTRS_GET_TYPENAME(attrs), __VA_ARGS__), \
+	(__GMOCK_FIRST($i, [[$for k, [[GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), $k, GMOCK_ARG_(__GMOCK_ATTRS_GET_TYPENAME(attrs), 1, void(__VA_ARGS__)))]]]])), \
+        (__VA_ARGS__), \
+        attrs \
     )
 
 ]]
