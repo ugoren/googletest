@@ -147,6 +147,8 @@ struct Function<R(*)($As)> : Function<R($As)> {};
 #define GMOCK_USE_P99
 #endif
 
+#define __GMOCK_CONCAT(a, b) a##b
+
 #if defined(GMOCK_USE_P99)
 
 #include "gmock-generated-p99.h"
@@ -154,8 +156,6 @@ struct Function<R(*)($As)> : Function<R($As)> {};
 #define __GMOCK_FIRST __GMOCK_P99_SELS
 
 #else // GMOCK_USE_P99
-
-#define __GMOCK_CONCAT(a, b) a##b
 
 $var n1 = n+1
 $range i 1..n1
@@ -182,5 +182,34 @@ $var as = [[$for j, [[_$j]]]]
 ]]
 
 #endif // GMOCK_USE_P99
+
+#define __GMOCK_CONCAT_2(a, b) __GMOCK_CONCAT(a, b)
+// List manipulation macros
+#define __GMOCK_LIST_FIRST(list) __GMOCK_LIST_FIRST_ list
+#define __GMOCK_LIST_FIRST_(a, ...) a
+#define __GMOCK_LIST_TAIL(list) (__GMOCK_LIST_TAIL_ list)
+#define __GMOCK_LIST_TAIL_(a, ...) __VA_ARGS__
+#define __GMOCK_LIST_APPEND(list, item) __GMOCK_CONCAT_2(__GMOCK_LIST_APPEND_, __GMOCK_P99_IS_EMPTY list)(list, item)
+#define __GMOCK_LIST_APPEND_0(list, item) (__GMOCK_LIST_NOPAREN(list), item)
+#define __GMOCK_LIST_APPEND_1(list, item) (item)
+#define __GMOCK_LIST_NOPAREN(list) __GMOCK_LIST_NOPAREN_ list
+#define __GMOCK_LIST_NOPAREN_(...) __VA_ARGS__
+
+
+// Invoke a macro function for each element of a list.
+// Expands to MACRO(0, ITEM0), MACRO(1, ITEM1) ...
+#define __GMOCK_FOREACH(macro, list) __GMOCK_FOREACH_(__GMOCK_NARGS list, macro, list)
+#define __GMOCK_FOREACH_(n, macro, list) __GMOCK_CONCAT(__GMOCK_FOREACH_, n)(macro, list, ())
+
+#define __GMOCK_FOREACH_0(macro, list, past)
+#define __GMOCK_FOREACH_1(macro, list, past) macro(__GMOCK_NARGS past, __GMOCK_LIST_FIRST(list))
+
+$for i [[
+#define __GMOCK_FOREACH_$(i+1)(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_$i(macro, __GMOCK_LIST_TAIL(list), __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+
+]]
+
 
 #endif  // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_INTERNAL_UTILS_H_

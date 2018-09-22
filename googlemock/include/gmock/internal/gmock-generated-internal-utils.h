@@ -329,6 +329,8 @@ struct Function<R(*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : Function<R(A1,
 #define GMOCK_USE_P99
 #endif
 
+#define __GMOCK_CONCAT(a, b) a##b
+
 #if defined(GMOCK_USE_P99)
 
 #include "gmock-generated-p99.h"
@@ -336,8 +338,6 @@ struct Function<R(*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : Function<R(A1,
 #define __GMOCK_FIRST __GMOCK_P99_SELS
 
 #else // GMOCK_USE_P99
-
-#define __GMOCK_CONCAT(a, b) a##b
 #define __GMOCK_EXPAND(x) x
 #define __GMOCK_AUGMENTER(...) unused, __VA_ARGS__
 #define __GMOCK_NARGS_0(...) __GMOCK_NARGS_1(__GMOCK_AUGMENTER(__VA_ARGS__))
@@ -368,5 +368,72 @@ struct Function<R(*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)> : Function<R(A1,
     _2, _3, _4, _5, _6, _7, _8, _9, _10
 
 #endif // GMOCK_USE_P99
+
+#define __GMOCK_CONCAT_2(a, b) __GMOCK_CONCAT(a, b)
+// List manipulation macros
+#define __GMOCK_LIST_FIRST(list) __GMOCK_LIST_FIRST_ list
+#define __GMOCK_LIST_FIRST_(a, ...) a
+#define __GMOCK_LIST_TAIL(list) (__GMOCK_LIST_TAIL_ list)
+#define __GMOCK_LIST_TAIL_(a, ...) __VA_ARGS__
+#define __GMOCK_LIST_APPEND(list, \
+    item) __GMOCK_CONCAT_2(__GMOCK_LIST_APPEND_, \
+    __GMOCK_P99_IS_EMPTY list)(list, item)
+#define __GMOCK_LIST_APPEND_0(list, item) (__GMOCK_LIST_NOPAREN(list), item)
+#define __GMOCK_LIST_APPEND_1(list, item) (item)
+#define __GMOCK_LIST_NOPAREN(list) __GMOCK_LIST_NOPAREN_ list
+#define __GMOCK_LIST_NOPAREN_(...) __VA_ARGS__
+
+
+// Invoke a macro function for each element of a list.
+// Expands to MACRO(0, ITEM0), MACRO(1, ITEM1) ...
+#define __GMOCK_FOREACH(macro, list) __GMOCK_FOREACH_(__GMOCK_NARGS list, \
+    macro, list)
+#define __GMOCK_FOREACH_(n, macro, list) __GMOCK_CONCAT(__GMOCK_FOREACH_, \
+    n)(macro, list, ())
+
+#define __GMOCK_FOREACH_0(macro, list, past)
+#define __GMOCK_FOREACH_1(macro, list, past) macro(__GMOCK_NARGS past, \
+    __GMOCK_LIST_FIRST(list))
+#define __GMOCK_FOREACH_2(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_1(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_3(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_2(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_4(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_3(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_5(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_4(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_6(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_5(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_7(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_6(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_8(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_7(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_9(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_8(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_10(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_9(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+#define __GMOCK_FOREACH_11(macro, list, past) \
+    __GMOCK_FOREACH_1(macro, list, past), \
+    __GMOCK_FOREACH_10(macro, __GMOCK_LIST_TAIL(list), \
+        __GMOCK_LIST_APPEND(past, __GMOCK_LIST_FIRST(list)))
+
 
 #endif  // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_INTERNAL_UTILS_H_
