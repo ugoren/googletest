@@ -213,46 +213,33 @@ using internal::FunctionMocker;
 // MSVC needs this extra layer in case the parameters need to be expanded.
 #define __GMOCK_CONCAT_TOKEN_(x, y) GTEST_CONCAT_TOKEN_(x, y)
 
-#define REP(MACRO, ARG) MACRO(ARG, 0), MACRO(ARG, 1), MACRO(ARG, 2), MACRO(ARG, 3), MACRO(ARG, 4), \
-                        MACRO(ARG, 5), MACRO(ARG, 6), MACRO(ARG, 7), MACRO(ARG, 8), MACRO(ARG, 9)
-#define REPN(N, MACRO, ARG) __GMOCK_FIRST(N, REP(MACRO, ARG))
-#define GETN(N, L) __GMOCK_CONCAT_TOKEN_(GETN_, N) L
-
-$range k 1..n
-
-#define GETN_0(a, ...) a
-
-$for k [[
-$var kminus1=k-1
-#define GETN_$k(a, ...) GETN_$kminus1(__VA_ARGS__)
-
-]]
-
 #define __GMOCK_MOCKER_NAME(method, nargs, attrs) GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), method)
-#define GMOCK_ARGN_NAME(args, n) __GMOCK_CONCAT_TOKEN_(gmock_a, n)
-#define GMOCK_ARGN_DECL(args, n) GETN(n, args) GMOCK_ARGN_NAME(args, n)
-#define GMOCK_ARGN_M_DECL(args, n) const ::testing::Matcher<GETN(n, args)> GMOCK_ARGN_NAME(args, n)
-#define GMOCK_ARGN_FORWARD(args, n) ::testing::internal::forward<GETN(n, args)>(GMOCK_ARGN_NAME(args, n))
-#define GMOCK_ANYMATCHER(arg) ::testing::A<arg>()
+
+// Macros used with __GMOCK_FOREACH to construct lists based on the arg types
+#define GMOCK_ARG_NAME(i, t) __GMOCK_CONCAT_TOKEN_(gmock_a, i)
+#define GMOCK_ARG_DECL(i, t) t GMOCK_ARG_NAME(i, t)
+#define GMOCK_ARG_M_DECL(i, t) const ::testing::Matcher<t> GMOCK_ARG_NAME(i, t)
+#define GMOCK_ARG_FORWARD(i, t) ::testing::internal::forward<t>(GMOCK_ARG_NAME(i, t))
+#define GMOCK_ARG_M_ANY(i, t) ::testing::A<t>()
 
 #define GMOCK_METHOD_BASE(nargs, Method, rtype, arg_types, signature, attrs) \
   rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) \
-  Method(REPN(nargs, GMOCK_ARGN_DECL, arg_types)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
+  Method(__GMOCK_FOREACH(GMOCK_ARG_DECL, arg_types)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
     __GMOCK_MOCKER_NAME(Method, nargs, attrs).SetOwnerAndName(this, #Method); \
-    return __GMOCK_MOCKER_NAME(Method, nargs, attrs).Invoke(REPN(nargs, GMOCK_ARGN_FORWARD, arg_types)); \
+    return __GMOCK_MOCKER_NAME(Method, nargs, attrs).Invoke(__GMOCK_FOREACH(GMOCK_ARG_FORWARD, arg_types)); \
   } \
-  ::testing::MockSpec<NOPAREN signature> \
-      gmock_##Method(REPN(nargs, GMOCK_ARGN_M_DECL, arg_types)) __GMOCK_ATTRS_GET_CONST(attrs) { \
+  ::testing::MockSpec<__GMOCK_LIST_NOPAREN(signature)> \
+      gmock_##Method(__GMOCK_FOREACH(GMOCK_ARG_M_DECL, arg_types)) __GMOCK_ATTRS_GET_CONST(attrs) { \
     __GMOCK_MOCKER_NAME(Method, nargs, attrs).RegisterOwner(this); \
-    return __GMOCK_MOCKER_NAME(Method, nargs, attrs).With(REPN(nargs, GMOCK_ARGN_NAME, arg_types)); \
+    return __GMOCK_MOCKER_NAME(Method, nargs, attrs).With(__GMOCK_FOREACH(GMOCK_ARG_NAME, arg_types)); \
   } \
-  ::testing::MockSpec<NOPAREN signature> \
+  ::testing::MockSpec<__GMOCK_LIST_NOPAREN(signature)> \
   gmock_##Method(const ::testing::internal::WithoutMatchers&, \
-      __GMOCK_ATTRS_GET_CONST(attrs) ::testing::internal::Function<NOPAREN signature>* = 0) const { \
+      __GMOCK_ATTRS_GET_CONST(attrs) ::testing::internal::Function<__GMOCK_LIST_NOPAREN(signature)>* = 0) const { \
     return ::testing::internal::__GMOCK_CONCAT_TOKEN_(AdjustConstness_, __GMOCK_ATTRS_GET_CONST(attrs))(this)-> \
-      gmock_##Method(__GMOCK_P99_SEQ(GMOCK_ANYMATCHER, NOPAREN arg_types)); \
+      gmock_##Method(__GMOCK_FOREACH(GMOCK_ARG_M_ANY, arg_types)); \
   } \
-  mutable ::testing::FunctionMocker<NOPAREN signature> __GMOCK_MOCKER_NAME(Method, nargs, attrs)
+  mutable ::testing::FunctionMocker<__GMOCK_LIST_NOPAREN(signature)> __GMOCK_MOCKER_NAME(Method, nargs, attrs)
      
 
 #define MOCK_METHOD_NEW_BASE(rtype, m, args, attrs) \
@@ -261,7 +248,7 @@ $var kminus1=k-1
 #define GMOCK_WRAP_RTYPE(typename, ...)  GMOCK_RESULT_(typename, GMOCK_ARG_(typename, 1, void(__VA_ARGS__)))
 
 $for i [[
-
+$range k 1..i
 #define MOCK_METHOD_BC_BASE$i(attrs, m, ...) \
     GMOCK_METHOD_BASE($i, m, \
         GMOCK_WRAP_RTYPE(__GMOCK_ATTRS_GET_TYPENAME(attrs), __VA_ARGS__), \
