@@ -243,6 +243,10 @@ $var anything_matchers = [[$for j, \
 // MSVC needs this extra layer in case the parameters need to be expanded.
 #define __GMOCK_CONCAT_TOKEN_(x, y) GTEST_CONCAT_TOKEN_(x, y)
 
+#define CAT_COMMA(_1, _2, a, b) a, b
+#define ARG_A(_1, _2, n) ARG_A1(__GMOCK_CONCAT_TOKEN_(__GMOCK_P99_SUCC_, n))
+#define ARG_A1(_1, _2, n) __GMOCK_CONCAT_TOKEN_(T, n) __GMOCK_CONCAT_TOKEN_(gmock_a, n)
+
 $range k 1..n
 $var gen_arg_types = [[$for k, [[T$k]]]]
 $var gen_arg_as = [[$for k, [[T$k gmock_a$k]]]]
@@ -253,7 +257,7 @@ $var forward_as = [[$for k, [[::testing::internal::forward<T$k>(gmock_a$k)]]]]
 $var anything_matchers = [[$for k, [[::testing::A<T$k>()]]]]
 #define GMOCK_METHOD_BASE(nargs, Method, rtype, attrs, $gen_arg_types) \
  rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) Method( \
-      __GMOCK_FIRST(nargs, $gen_arg_as)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
+	  __GMOCK_P99_FOR(, nargs, CAT_COMMA, ARG_A)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
     GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method).SetOwnerAndName(this, #Method); \
     return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), Method).Invoke(__GMOCK_FIRST(nargs, $forward_as)); \
   } \

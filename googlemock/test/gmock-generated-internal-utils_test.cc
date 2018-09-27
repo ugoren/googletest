@@ -185,4 +185,19 @@ TEST(SerMacro, Map) {
 #undef ADD_PLUS
 }
 
+TEST(ForMacro, For) {
+	int arr[] = { 1, 2, 3, 4, 5, 6 };
+#define SUM(a, b, c, d) ((c)+(d))
+#define GET_ELEM_SQR(arr, _, i) (arr[i]*arr[i])
+	EXPECT_EQ(0,  __GMOCK_P99_FOR(arr, 0, SUM, GET_ELEM_SQR) + 0);	// FOR evaluates to nothing
+	EXPECT_EQ(1,  __GMOCK_P99_FOR(arr, 1, SUM, GET_ELEM_SQR));
+	EXPECT_EQ(5,  __GMOCK_P99_FOR(arr, 2, SUM, GET_ELEM_SQR));
+	EXPECT_EQ(14, __GMOCK_P99_FOR(arr, 3, SUM, GET_ELEM_SQR));
+	EXPECT_EQ(30, __GMOCK_P99_FOR(arr, 4, SUM, GET_ELEM_SQR));
+	EXPECT_EQ(55, __GMOCK_P99_FOR(arr, 5, SUM, GET_ELEM_SQR));
+	EXPECT_EQ(91, __GMOCK_P99_FOR(arr, 6, SUM, GET_ELEM_SQR));
+#undef SUM
+#undef GET_ELEM_SQR
+}
+
 }  // Unnamed namespace

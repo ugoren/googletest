@@ -130,30 +130,148 @@
 #define __GMOCK_P00_MAP_2(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_1(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR2(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 1, __GMOCK_P00_FOR1(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 1))
+
+#define __GMOCK_P00_SKP2(_0, ...) __GMOCK_P00_SKP1(__VA_ARGS__)
 #define __GMOCK_P00_MAP_3(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_2(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR3(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 2, __GMOCK_P00_FOR2(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 2))
+
+#define __GMOCK_P00_SKP3(_0, ...) __GMOCK_P00_SKP2(__VA_ARGS__)
 #define __GMOCK_P00_MAP_4(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_3(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR4(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 3, __GMOCK_P00_FOR3(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 3))
+
+#define __GMOCK_P00_SKP4(_0, ...) __GMOCK_P00_SKP3(__VA_ARGS__)
 #define __GMOCK_P00_MAP_5(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_4(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR5(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 4, __GMOCK_P00_FOR4(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 4))
+
+#define __GMOCK_P00_SKP5(_0, ...) __GMOCK_P00_SKP4(__VA_ARGS__)
 #define __GMOCK_P00_MAP_6(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_5(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR6(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 5, __GMOCK_P00_FOR5(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 5))
+
+#define __GMOCK_P00_SKP6(_0, ...) __GMOCK_P00_SKP5(__VA_ARGS__)
 #define __GMOCK_P00_MAP_7(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_6(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR7(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 6, __GMOCK_P00_FOR6(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 6))
+
+#define __GMOCK_P00_SKP7(_0, ...) __GMOCK_P00_SKP6(__VA_ARGS__)
 #define __GMOCK_P00_MAP_8(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_7(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR8(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 7, __GMOCK_P00_FOR7(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 7))
+
+#define __GMOCK_P00_SKP8(_0, ...) __GMOCK_P00_SKP7(__VA_ARGS__)
 #define __GMOCK_P00_MAP_9(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_8(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR9(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 8, __GMOCK_P00_FOR8(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 8))
+
+#define __GMOCK_P00_SKP9(_0, ...) __GMOCK_P00_SKP8(__VA_ARGS__)
 #define __GMOCK_P00_MAP_10(MAC, SEP, X, \
     ...) MAC(X)__GMOCK_P00_ROBUST SEP __GMOCK_P00_MAP_9(MAC, SEP, \
     __VA_ARGS__)
+
+#define __GMOCK_P00_FOR10(NAME, OP, FUNC, \
+    ...)                                                                     \
+ OP(NAME, 9, __GMOCK_P00_FOR9(NAME, OP, FUNC, \
+     __GMOCK_P99_ALLBUTLAST(__VA_ARGS__)), FUNC(NAME, \
+     __GMOCK_P99_LAST(__VA_ARGS__), 9))
+
+#define __GMOCK_P00_SKP10(_0, ...) __GMOCK_P00_SKP9(__VA_ARGS__)
+#define __GMOCK_P00_PRED_1 0
+#define __GMOCK_P00_PRED_minus_0 minus_1
+#define __GMOCK_P00_PRED_2 1
+#define __GMOCK_P00_PRED_minus_1 minus_2
+#define __GMOCK_P00_PRED_3 2
+#define __GMOCK_P00_PRED_minus_2 minus_3
+#define __GMOCK_P00_PRED_4 3
+#define __GMOCK_P00_PRED_minus_3 minus_4
+#define __GMOCK_P00_PRED_5 4
+#define __GMOCK_P00_PRED_minus_4 minus_5
+#define __GMOCK_P00_PRED_6 5
+#define __GMOCK_P00_PRED_minus_5 minus_6
+#define __GMOCK_P00_PRED_7 6
+#define __GMOCK_P00_PRED_minus_6 minus_7
+#define __GMOCK_P00_PRED_8 7
+#define __GMOCK_P00_PRED_minus_7 minus_8
+#define __GMOCK_P00_PRED_9 8
+#define __GMOCK_P00_PRED_minus_8 minus_9
+#define __GMOCK_P00_PRED_10 9
+#define __GMOCK_P00_PRED_minus_9 minus_10
+#define __GMOCK_P00_PRED_11 10
+#define __GMOCK_P00_PRED_minus_10 minus_11
+
+//
+// Taken from p99_logical.h
+//
+
+/**
+ ** @brief Obtain the last element of a list.
+ **/
+#define __GMOCK_P99_LAST(...) \
+    __GMOCK_P99_CHS(__GMOCK_P99_PRED(__GMOCK_P00_NARG(__VA_ARGS__)), \
+    __VA_ARGS__,)
+
+/**
+ ** @brief Obtain all elements but the last of a list.
+ **/
+#define __GMOCK_P99_ALLBUTLAST(...) __GMOCK_P99_PASTE2(__GMOCK_P00_PRE, \
+    __GMOCK_P99_PRED(__GMOCK_P00_NARG(__VA_ARGS__)))(__VA_ARGS__,)
+
+#define __GMOCK_P99_PRED(N) __GMOCK_P00_PRED(N)
+#define __GMOCK_P00_PRED(N) __GMOCK_P00__PRED(__GMOCK_P00_PRED_ , N)
+#define __GMOCK_P00__PRED(P, N) P ## N
+
+#define __GMOCK_P00_PRED_0 minus_1
+
 
 //
 // Taken from p99_args.h
@@ -271,6 +389,25 @@ __GMOCK_P00_ISEMPTY( \
 #define __GMOCK_P00_PRE1(_0, ...) _0
 
 /**
+ ** @brief Skip @a N elements in the remaining argument list.
+ **/
+#define __GMOCK_P99_SKP(N, ...) __GMOCK_P99_PASTE2(__GMOCK_P00_SKP, \
+    N)(__VA_ARGS__)
+
+#define __GMOCK_P00_SKP0(...) __VA_ARGS__
+#define __GMOCK_P00_SKP1(_0, ...) __VA_ARGS__
+
+/**
+ ** @brief Choose the @a N<sup>th</sup> element in the remaining argument
+ ** list.
+ **
+ ** Counting of elements starts at 0.
+ **/
+#define __GMOCK_P99_CHS(N, ...) __GMOCK_P00_CHS(__GMOCK_P99_SKP(N, __VA_ARGS__))
+#define __GMOCK_P00_CHS(...) __GMOCK_P00_CHS_(__VA_ARGS__,)
+#define __GMOCK_P00_CHS_(X, ...) X
+
+/**
  ** Cut the argument list at position @a N
  **/
 #define __GMOCK_P99_SELS(N, ...) __GMOCK_P99_PASTE2(__GMOCK_P00_PRE, \
@@ -307,5 +444,57 @@ __GMOCK_P00_ISEMPTY( \
 #define __GMOCK_P99_SER(MACRO, \
     ...) __GMOCK_P00_MAP_(__GMOCK_P99_NARG(__VA_ARGS__), MACRO, ( ), \
     __VA_ARGS__)
+
+/**
+ ** @brief A preprocessor pseudo iterator.
+ **
+ ** @param NAME a name or other data that is visible to all iterations
+ ** @param N the number of times the iteration is to be done
+ ** @param OP an operation that is performed to glue the different
+ **        results of the individual iterations together
+ ** @param FUNC a function that is applied in each iteration
+ **
+ ** In each iteration, @a FUNC will be called as @c FUNC(NAME, X, I).
+ ** Here @a NAME is the same as the argument to ::P99_FOR. @c I is the
+ ** ordinal number of this iteration step, starting from 0. @c X is
+ ** the @c Ith argument from the remaining argument list of this
+ ** invocation of ::P99_FOR.
+ **
+ ** @a OP is called for iterations 1 to @a N - 1 to glue the results
+ ** of the @a N iterations together. It is called in the form @a
+ ** OP(NAME, I, REC, RES), where @a NAME and @c I are as before. @c
+ ** REC is the result of all iterations with index less than @c I, @c
+ ** RES is the result of the current iteration.
+ **
+ ** @code
+ ** #define P00_SEP(NAME, I, REC, RES) REC; RES
+ ** #define P00_VASSIGN(NAME, X, I) X = (NAME)[I]
+ **
+ ** P99_FOR(A, 2, P00_SEP, P00_VASSIGN, toto, tutu);
+ ** @endcode
+ **
+ ** Will result in
+ ** @code
+ ** toto = (A)[0]; tutu = (A)[1];
+ ** @endcode
+ **
+ ** To understand the associativity of the @a OP argument
+ ** @code
+ ** #define P00_SUM(NAME, I, REC, RES) ((REC) + (RES))
+ ** #define P00_IDT(NAME, X, I) X
+ **
+ ** P99_FOR(A, 2, P00_SUM, P00_IDT, a, b, c)
+ ** @endcode
+ ** Will result in
+ ** @code
+ ** ((((a) + (b))) + (c))
+ ** @endcode
+ **/
+#define __GMOCK_P99_FOR(NAME, N, OP, FUNC, \
+    ...) __GMOCK_P99_PASTE2(__GMOCK_P00_FOR, N)(NAME, OP, FUNC, __VA_ARGS__)
+
+#define __GMOCK_P00_FOR0(NAME, OP, FUNC, ...)
+#define __GMOCK_P00_FOR1(NAME, OP, FUNC, ...) FUNC(NAME, \
+    __GMOCK_P00_PRE1(__VA_ARGS__,), 0)
 
 #endif // GMOCK_INCLUDE_GMOCK_INTERNAL_GMOCK_GENERATED_P99_H_

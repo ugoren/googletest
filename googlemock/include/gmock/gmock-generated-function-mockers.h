@@ -932,13 +932,15 @@ using internal::FunctionMocker;
 
 // MSVC needs this extra layer in case the parameters need to be expanded.
 #define __GMOCK_CONCAT_TOKEN_(x, y) GTEST_CONCAT_TOKEN_(x, y)
+
+#define CAT_COMMA(_1, _2, a, b) a, b
+#define ARG_A(_1, _2, n) __GMOCK_CONCAT_TOKEN_(T, \
+    n) __GMOCK_CONCAT_TOKEN_(gmock_a, n)
 #define GMOCK_METHOD_BASE(nargs, Method, rtype, attrs, T1, T2, T3, T4, T5, \
     T6, T7, T8, T9, T10) \
  rtype __GMOCK_ATTRS_GET_CALLTYPE(attrs) Method( \
-      __GMOCK_FIRST(nargs, T1 gmock_a1, T2 gmock_a2, T3 gmock_a3, \
-          T4 gmock_a4, T5 gmock_a5, T6 gmock_a6, T7 gmock_a7, T8 gmock_a8, \
-          T9 gmock_a9, \
-          T10 gmock_a10)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
+   __GMOCK_P99_FOR(, nargs, CAT_COMMA, \
+       ARG_A)) __GMOCK_ATTRS_GET_CONST(attrs) __GMOCK_ATTRS_GET_OTHER(attrs) { \
     GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
         Method).SetOwnerAndName(this, #Method); \
     return GMOCK_MOCKER_EXPAND(nargs, __GMOCK_ATTRS_GET_CONST(attrs), \
